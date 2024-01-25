@@ -92,7 +92,7 @@ class ParamWithTypes(TypedDict):
     type: str  # ScaleType string of the parameter.
 
 
-class subtensor:
+class Subtensor:
     """
     The subtensor class in Bittensor serves as a crucial interface for interacting with the Bittensor blockchain,
     facilitating a range of operations essential for the decentralized machine learning network. This class
@@ -151,7 +151,7 @@ class subtensor:
     @staticmethod
     def config() -> "bittensor.config":
         parser = argparse.ArgumentParser()
-        subtensor.add_args(parser)
+        Subtensor.add_args(parser)
         logger.debug(bittensor.config(parser, args=[]))
         return bittensor.config(parser, args=[])
 
@@ -272,7 +272,7 @@ class subtensor:
         ]
 
         for get_network in network_preference_order:
-            evaluated_network, evaluated_endpoint = subtensor.determine_chain_endpoint_and_network(get_network())
+            evaluated_network, evaluated_endpoint = Subtensor.determine_chain_endpoint_and_network(get_network())
             if evaluated_network and evaluated_endpoint:
                 break
 
@@ -307,69 +307,70 @@ class subtensor:
 
         """
         # Determine config.subtensor.chain_endpoint and config.subtensor.network config.
-        # If chain_endpoint is set, we override the network flag, otherwise, the chain_endpoint is assigned by the network.
+        # If chain_endpoint is set, we override the network flag,
+        # otherwise, the chain_endpoint is assigned by the network.
         # Argument importance: network > chain_endpoint > config.subtensor.chain_endpoint > config.subtensor.network
         if config is None:
-            config = subtensor.config()
+            config = Subtensor.config()
         self.config = copy.deepcopy(config)
 
-        # Setup config.subtensor.network and config.subtensor.chain_endpoint
-        self.chain_endpoint, self.network = subtensor.setup_config(network, config)
+        self.chain_endpoint, self.network = self.setup_config(network, self.config)
 
-        if (
-            self.network == "finney"
-            or self.chain_endpoint == bittensor.__finney_entrypoint__
-        ) and log_verbose:
-            bittensor.logging.info(
-                f"You are connecting to {self.network} network with endpoint {self.chain_endpoint}."
-            )
-            bittensor.logging.warning(
-                "We strongly encourage running a local subtensor node whenever possible. "
-                "This increases decentralization and resilience of the network."
-            )
-            bittensor.logging.warning(
-                "In a future release, local subtensor will become the default endpoint. "
-                "To get ahead of this change, please run a local subtensor node and point to it."
-            )
+        if self.network == "finney" or self.chain_endpoint == bittensor.__finney_entrypoint__ and log_verbose:
+            bittensor.logging.info(f"You are connecting to {self.network} network with endpoint {self.chain_endpoint}.")
+            bittensor.logging.warning("We strongly encourage running a local subtensor node whenever possible.")
+            bittensor.logging.warning("In a future release, local subtensor will become the default endpoint.")
 
-        # Returns a mocked connection with a background chain connection.
         self.config.subtensor._mock = (
-            _mock
-            if _mock != None
+            _mock if _mock is not None
             else self.config.subtensor.get("_mock", bittensor.defaults.subtensor._mock)
         )
         if self.config.subtensor._mock:
             config.subtensor._mock = True
+        else:
+            # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
+            try:
+                # Set up params.
+                self.substrate = SubstrateInterface(
+                    ss58_format=bittensor.__ss58_format__,
+                    use_remote_preset=True,
+                    url=self.chain_endpoint,
+                    type_registry=bittensor.__type_registry__,
+                )
+            except ConnectionRefusedError as e:
+                bittensor.logging.error(
+                    f"Could not connect to {self.network} network with {self.chain_endpoint} chain endpoint. Exiting..."
+                )
+                bittensor.logging.info(
+                    f"You can check if you have connectivity by runing this command: nc -vz localhost {self.chain_endpoint.split(':')[2]}"
+                )
+                exit(1)
+                # TODO (edu/phil): Advise to run local subtensor and point to dev docs.
+
+            try:
+                self.substrate.websocket.settimeout(600)
+            except Exception as exc:
+                bittensor.logging.warning("Could not set websocket timeout.")
+
+            if log_verbose:
+                bittensor.logging.info(
+                    f"Connected to {self.network} network and {self.chain_endpoint}."
+                )
+
+    def __new__(
+            cls,
+            network: str = None,
+            config: "bittensor.config" = None,
+            _mock: bool = False,
+            log_verbose: bool = True
+    ):
+        """
+        Override to conditionally return a mocked instance.
+        """
+        if _mock:
             return bittensor.subtensor_mock.MockSubtensor()
-
-        # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
-        try:
-            # Set up params.
-            self.substrate = SubstrateInterface(
-                ss58_format=bittensor.__ss58_format__,
-                use_remote_preset=True,
-                url=self.chain_endpoint,
-                type_registry=bittensor.__type_registry__,
-            )
-        except ConnectionRefusedError as e:
-            bittensor.logging.error(
-                f"Could not connect to {self.network} network with {self.chain_endpoint} chain endpoint. Exiting..."
-            )
-            bittensor.logging.info(
-                f"You can check if you have connectivity by runing this command: nc -vz localhost {self.chain_endpoint.split(':')[2]}"
-            )
-            exit(1)
-            # TODO (edu/phil): Advise to run local subtensor and point to dev docs.
-
-        try:
-            self.substrate.websocket.settimeout(600)
-        except:
-            bittensor.logging.warning("Could not set websocket timeout.")
-
-        if log_verbose:
-            bittensor.logging.info(
-                f"Connected to {self.network} network and {self.chain_endpoint}."
-            )
+        else:
+            return super().__new__(cls, network, config, False, log_verbose)
 
     def __str__(self) -> str:
         if self.network == self.chain_endpoint:
@@ -2056,8 +2057,8 @@ class subtensor:
     def update_identity(
         self,
         wallet: "bittensor.wallet",
-        identified: str = None,
-        params: dict = {},
+        identified: Optional[str] = None,
+        params: Optional[dict] = None,
         wait_for_inclusion: bool = True,
         wait_for_finalization: bool = False,
     ) -> bool:
@@ -2080,11 +2081,12 @@ class subtensor:
         This function plays a vital role in maintaining the accuracy and currency of neuron identities in the
         Bittensor network, ensuring that the network's governance and consensus mechanisms operate effectively.
         """
-        if identified == None:
+        if identified is None:
             identified = wallet.coldkey.ss58_address
 
-        call_params = bittensor.utils.wallet_utils.create_identity_dict(**params)
-        call_params["identified"] = identified
+        if params:
+            call_params = bittensor.utils.wallet_utils.create_identity_dict(**params)
+            call_params["identified"] = identified
 
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry():
@@ -2138,7 +2140,7 @@ class subtensor:
         self,
         name: str,
         block: Optional[int] = None,
-        params: Optional[List[object]] = [],
+        params: Optional[List[object]] = None,
     ) -> Optional[ScaleType]:
         """
         Queries named storage from the subtensor module on the Bittensor blockchain. This function is used to retrieve
@@ -2164,7 +2166,7 @@ class subtensor:
                     storage_function=name,
                     params=params,
                     block_hash=None
-                    if block == None
+                    if block is None
                     else substrate.get_block_hash(block),
                 )
 
