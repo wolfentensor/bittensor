@@ -123,6 +123,7 @@ class TestSubtensorWithExternalAxon(unittest.TestCase):
         self.assertEqual(axon_info.port, external_port)
 
 
+
 class ExitEarly(Exception):
     """Mock exception to exit early from the called code"""
 

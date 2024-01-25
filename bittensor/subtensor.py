@@ -151,6 +151,7 @@ class subtensor:
     def config() -> "bittensor.config":
         parser = argparse.ArgumentParser()
         subtensor.add_args(parser)
+        logger.debug(bittensor.config(parser, args=[]))
         return bittensor.config(parser, args=[])
 
     @classmethod
@@ -203,55 +204,82 @@ class subtensor:
             pass
 
     @staticmethod
-    def determine_chain_endpoint_and_network(network: str):
-        """Determines the chain endpoint and network from the passed network or chain_endpoint.
+    def determine_chain_endpoint_and_network(network: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+        """Determines the chain endpoint and network from the passed network.
+
         Args:
             network (str): The network flag. The likely choices are:
                     -- finney (main network)
                     -- archive (archive network +300 blocks)
                     -- local (local running network)
                     -- test (test network)
-            chain_endpoint (str): The chain endpoint flag. If set, overrides the network argument.
         Returns:
             network (str): The network flag. The likely choices are:
             chain_endpoint (str): The chain endpoint flag. If set, overrides the network argument.
         """
-        if network is None:
-            return None, None
-        if network in ["finney", "local", "test", "archive"]:
-            if network == "finney":
-                # Kiru Finney stagin network.
-                return network, bittensor.__finney_entrypoint__
-            elif network == "local":
-                return network, bittensor.__local_entrypoint__
-            elif network == "test":
-                return network, bittensor.__finney_test_entrypoint__
-            elif network == "archive":
-                return network, bittensor.__archive_entrypoint__
-        else:
-            if (
-                network == bittensor.__finney_entrypoint__
-                or "entrypoint-finney.opentensor.ai" in network
-            ):
-                return "finney", bittensor.__finney_entrypoint__
-            elif (
-                network == bittensor.__finney_test_entrypoint__
-                or "test.finney.opentensor.ai" in network
-            ):
-                return "test", bittensor.__finney_test_entrypoint__
-            elif (
-                network == bittensor.__archive_entrypoint__
-                or "archive.chain.opentensor.ai" in network
-            ):
-                return "archive", bittensor.__archive_entrypoint__
-            elif "127.0.0.1" in network or "localhost" in network:
-                return "local", network
-            else:
-                return "unknown", network
+        network_mappings = {
+            "finney": ("finney", bittensor.__finney_entrypoint__),
+            "local": ("local", bittensor.__local_entrypoint__),
+            "test": ("test", bittensor.__finney_test_entrypoint__),
+            "archive": ("archive", bittensor.__archive_entrypoint__)
+        }
+
+        # Direct mapping check
+        if network in network_mappings:
+            return network_mappings[network]
+
+        # Endpoint checks
+        endpoint_checks = {
+            bittensor.__finney_entrypoint__: ("finney", bittensor.__finney_entrypoint__),
+            "entrypoint-finney.opentensor.ai": ("finney", bittensor.__finney_entrypoint__),
+            bittensor.__finney_test_entrypoint__: ("test", bittensor.__finney_test_entrypoint__),
+            "test.finney.opentensor.ai": ("test", bittensor.__finney_test_entrypoint__),
+            bittensor.__archive_entrypoint__: ("archive", bittensor.__archive_entrypoint__),
+            "archive.chain.opentensor.ai": ("archive", bittensor.__archive_entrypoint__)
+        }
+
+        for endpoint, result in endpoint_checks.items():
+            if endpoint in (network or ""):
+                return result
+
+        # Localhost check
+        if "127.0.0.1" in (network or "") or "localhost" in (network or ""):
+            return "local", network
+
+        return "unknown", network
 
     @staticmethod
-    def setup_config(network: str, config: bittensor.config):
-        if network != None:
+    def setup_config(network: Optional[str], config: bittensor.config) -> Tuple[str, str]:
+        """Sets up the configuration based on the network and provided config object.
+
+        Args:
+            network: The network identifier or None.
+            config: A bittensor configuration object.
+
+        Returns:
+            A tuple containing the formatted WebSocket endpoint URL and the evaluated network.
+        """
+        evaluated_endpoint: Optional[str] = None
+        evaluated_network: Optional[str] = None
+        network_preference_order: list = [
+            lambda: network,
+            lambda: config.subtensor.chain_endpoint if config.get("__is_set", {}).get("subtensor.chain_endpoint") else None,
+            lambda: config.subtensor.network if config.get("__is_set", {}).get("subtensor.network") else None,
+            lambda: config.subtensor.chain_endpoint if config.subtensor.get("chain_endpoint") else None,
+            lambda: config.subtensor.network if config.subtensor.get("network") else None,
+            lambda: bittensor.defaults.subtensor.network
+        ]
+
+        for get_network in network_preference_order:
+            evaluated_network, evaluated_endpoint = subtensor.determine_chain_endpoint_and_network(get_network())
+            if evaluated_network and evaluated_endpoint:
+                break
+
+        return bittensor.utils.networking.get_formatted_ws_endpoint_url(evaluated_endpoint), evaluated_network
+
+    @staticmethod
+    def old_setup_config(network: str, config: bittensor.config):
+        if network is not None:
             (
                 evaluated_network,
                 evaluated_endpoint,
@@ -304,6 +332,55 @@ class subtensor:
             evaluated_network,
         )
 
+
+    @staticmethod
+    def old_determine_chain_endpoint_and_network(network: str):
+        """Determines the chain endpoint and network from the passed network or chain_endpoint.
+        Args:
+            network (str): The network flag. The likely choices are:
+                    -- finney (main network)
+                    -- archive (archive network +300 blocks)
+                    -- local (local running network)
+                    -- test (test network)
+            chain_endpoint (str): The chain endpoint flag. If set, overrides the network argument.
+        Returns:
+            network (str): The network flag. The likely choices are:
+            chain_endpoint (str): The chain endpoint flag. If set, overrides the network argument.
+        """
+        if network is None:
+            return None, None
+        if network in ["finney", "local", "test", "archive"]:
+            if network == "finney":
+                # Kiru Finney stagin network.
+                return network, bittensor.__finney_entrypoint__
+            elif network == "local":
+                return network, bittensor.__local_entrypoint__
+            elif network == "test":
+                return network, bittensor.__finney_test_entrypoint__
+            elif network == "archive":
+                return network, bittensor.__archive_entrypoint__
+        else:
+            if (
+                network == bittensor.__finney_entrypoint__
+                or "entrypoint-finney.opentensor.ai" in network
+            ):
+                return "finney", bittensor.__finney_entrypoint__
+            elif (
+                network == bittensor.__finney_test_entrypoint__
+                or "test.finney.opentensor.ai" in network
+            ):
+                return "test", bittensor.__finney_test_entrypoint__
+            elif (
+                network == bittensor.__archive_entrypoint__
+                or "archive.chain.opentensor.ai" in network
+            ):
+                return "archive", bittensor.__archive_entrypoint__
+            elif "127.0.0.1" in network or "localhost" in network:
+                return "local", network
+            else:
+                return "unknown", network
+
+
     def __init__(
         self,
         network: str = None,
@@ -335,7 +412,7 @@ class subtensor:
         # Determine config.subtensor.chain_endpoint and config.subtensor.network config.
         # If chain_endpoint is set, we override the network flag, otherwise, the chain_endpoint is assigned by the network.
         # Argument importance: network > chain_endpoint > config.subtensor.chain_endpoint > config.subtensor.network
-        if config == None:
+        if config is None:
             config = subtensor.config()
         self.config = copy.deepcopy(config)
 
