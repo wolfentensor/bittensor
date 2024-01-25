@@ -204,7 +204,9 @@ class Subtensor:
             pass
 
     @staticmethod
-    def determine_chain_endpoint_and_network(network: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+    def determine_chain_endpoint_and_network(
+        network: Optional[str] = None,
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Determines the chain endpoint and network from the passed network.
 
         Args:
@@ -221,7 +223,7 @@ class Subtensor:
             "finney": ("finney", bittensor.__finney_entrypoint__),
             "local": ("local", bittensor.__local_entrypoint__),
             "test": ("test", bittensor.__finney_test_entrypoint__),
-            "archive": ("archive", bittensor.__archive_entrypoint__)
+            "archive": ("archive", bittensor.__archive_entrypoint__),
         }
 
         # Direct mapping check
@@ -230,12 +232,27 @@ class Subtensor:
 
         # Endpoint checks
         endpoint_checks = {
-            bittensor.__finney_entrypoint__: ("finney", bittensor.__finney_entrypoint__),
-            "entrypoint-finney.opentensor.ai": ("finney", bittensor.__finney_entrypoint__),
-            bittensor.__finney_test_entrypoint__: ("test", bittensor.__finney_test_entrypoint__),
+            bittensor.__finney_entrypoint__: (
+                "finney",
+                bittensor.__finney_entrypoint__,
+            ),
+            "entrypoint-finney.opentensor.ai": (
+                "finney",
+                bittensor.__finney_entrypoint__,
+            ),
+            bittensor.__finney_test_entrypoint__: (
+                "test",
+                bittensor.__finney_test_entrypoint__,
+            ),
             "test.finney.opentensor.ai": ("test", bittensor.__finney_test_entrypoint__),
-            bittensor.__archive_entrypoint__: ("archive", bittensor.__archive_entrypoint__),
-            "archive.chain.opentensor.ai": ("archive", bittensor.__archive_entrypoint__)
+            bittensor.__archive_entrypoint__: (
+                "archive",
+                bittensor.__archive_entrypoint__,
+            ),
+            "archive.chain.opentensor.ai": (
+                "archive",
+                bittensor.__archive_entrypoint__,
+            ),
         }
 
         for endpoint, result in endpoint_checks.items():
@@ -249,7 +266,9 @@ class Subtensor:
         return "unknown", network
 
     @staticmethod
-    def setup_config(network: Optional[str], config: bittensor.config) -> Tuple[str, str]:
+    def setup_config(
+        network: Optional[str], config: bittensor.config
+    ) -> Tuple[str, str]:
         """Sets up the configuration based on the network and provided config object.
 
         Args:
@@ -263,19 +282,35 @@ class Subtensor:
         evaluated_network: Optional[str] = None
         network_preference_order: list = [
             lambda: network,
-            lambda: config.subtensor.chain_endpoint if config.get("__is_set", {}).get("subtensor.chain_endpoint") else None,
-            lambda: config.subtensor.network if config.get("__is_set", {}).get("subtensor.network") else None,
-            lambda: config.subtensor.chain_endpoint if config.subtensor.get("chain_endpoint") else None,
-            lambda: config.subtensor.network if config.subtensor.get("network") else None,
-            lambda: bittensor.defaults.subtensor.network
+            lambda: config.subtensor.chain_endpoint
+            if config.get("__is_set", {}).get("subtensor.chain_endpoint")
+            else None,
+            lambda: config.subtensor.network
+            if config.get("__is_set", {}).get("subtensor.network")
+            else None,
+            lambda: config.subtensor.chain_endpoint
+            if config.subtensor.get("chain_endpoint")
+            else None,
+            lambda: config.subtensor.network
+            if config.subtensor.get("network")
+            else None,
+            lambda: bittensor.defaults.subtensor.network,
         ]
 
         for get_network in network_preference_order:
-            evaluated_network, evaluated_endpoint = Subtensor.determine_chain_endpoint_and_network(get_network())
+            (
+                evaluated_network,
+                evaluated_endpoint,
+            ) = Subtensor.determine_chain_endpoint_and_network(get_network())
             if evaluated_network and evaluated_endpoint:
                 break
 
-        return bittensor.utils.networking.get_formatted_ws_endpoint_url(evaluated_endpoint), evaluated_network
+        return (
+            bittensor.utils.networking.get_formatted_ws_endpoint_url(
+                evaluated_endpoint
+            ),
+            evaluated_network,
+        )
 
     def __init__(
         self,
@@ -315,10 +350,20 @@ class Subtensor:
 
         self.chain_endpoint, self.network = self.setup_config(network, self.config)
 
-        if self.network == "finney" or self.chain_endpoint == bittensor.__finney_entrypoint__ and log_verbose:
-            bittensor.logging.info(f"You are connecting to {self.network} network with endpoint {self.chain_endpoint}.")
-            bittensor.logging.warning("We strongly encourage running a local subtensor node whenever possible.")
-            bittensor.logging.warning("In a future release, local subtensor will become the default endpoint.")
+        if (
+            self.network == "finney"
+            or self.chain_endpoint == bittensor.__finney_entrypoint__
+            and log_verbose
+        ):
+            bittensor.logging.info(
+                f"You are connecting to {self.network} network with endpoint {self.chain_endpoint}."
+            )
+            bittensor.logging.warning(
+                "We strongly encourage running a local subtensor node whenever possible."
+            )
+            bittensor.logging.warning(
+                "In a future release, local subtensor will become the default endpoint."
+            )
 
         # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
         try:
@@ -350,11 +395,11 @@ class Subtensor:
             )
 
     def __new__(
-            cls,
-            network: str = None,
-            config: "bittensor.config" = None,
-            _mock: bool = False,
-            log_verbose: bool = True
+        cls,
+        network: str = None,
+        config: "bittensor.config" = None,
+        _mock: bool = False,
+        log_verbose: bool = True,
     ):
         """
         Override to conditionally return a mocked instance.
@@ -1182,7 +1227,8 @@ class Subtensor:
         placeholder2: int = 0,
         wait_for_inclusion: bool = False,
         wait_for_finalization=True,
-        *args, **kwargs
+        *args,
+        **kwargs,
     ) -> bool:
         """
         Registers a neuron's serving endpoint on the Bittensor network. This function announces the
@@ -1227,7 +1273,8 @@ class Subtensor:
         axon: "bittensor.Axon",
         wait_for_inclusion: bool = False,
         wait_for_finalization: bool = True,
-        *args, **kwargs
+        *args,
+        **kwargs,
     ) -> bool:
         """
         Registers an Axon serving endpoint on the Bittensor network for a specific neuron. This function
@@ -2192,7 +2239,7 @@ class Subtensor:
         self,
         name: str,
         block: Optional[int] = None,
-        params: Optional[List[object]] = [],
+        params: Optional[List[object]] = None,
     ) -> QueryMapResult:
         """
         Queries map storage from the subtensor module on the Bittensor blockchain. This function is designed to
@@ -2218,7 +2265,7 @@ class Subtensor:
                     storage_function=name,
                     params=params,
                     block_hash=None
-                    if block == None
+                    if block is None
                     else substrate.get_block_hash(block),
                 )
 
@@ -2226,7 +2273,7 @@ class Subtensor:
 
     def query_constant(
         self, module_name: str, constant_name: str, block: Optional[int] = None
-    ) -> Optional[object]:
+    ) -> Optional[ScaleType]:
         """
         Retrieves a constant from the specified module on the Bittensor blockchain. This function is used to
         access fixed parameters or values defined within the blockchain's modules, which are essential for
@@ -2252,7 +2299,7 @@ class Subtensor:
                     module_name=module_name,
                     constant_name=constant_name,
                     block_hash=None
-                    if block == None
+                    if block is None
                     else substrate.get_block_hash(block),
                 )
 
@@ -2265,7 +2312,7 @@ class Subtensor:
         module: str,
         name: str,
         block: Optional[int] = None,
-        params: Optional[List[object]] = [],
+        params: Optional[List[object]] = None,
     ) -> Optional[ScaleType]:
         """
         Queries any module storage on the Bittensor blockchain with the specified parameters and block number.
@@ -2293,7 +2340,7 @@ class Subtensor:
                     storage_function=name,
                     params=params,
                     block_hash=None
-                    if block == None
+                    if block is None
                     else substrate.get_block_hash(block),
                 )
 
@@ -2306,7 +2353,7 @@ class Subtensor:
         module: str,
         name: str,
         block: Optional[int] = None,
-        params: Optional[List[object]] = [],
+        params: Optional[List[object]] = None,
     ) -> Optional[ScaleType]:
         """
         Queries map storage from any module on the Bittensor blockchain. This function retrieves data structures
@@ -2332,7 +2379,9 @@ class Subtensor:
                     module=module,
                     storage_function=name,
                     params=params,
-                    block_hash=None if block is None else substrate.get_block_hash(block),
+                    block_hash=None
+                    if block is None
+                    else substrate.get_block_hash(block),
                 )
 
         return make_substrate_call_with_retry()
@@ -2362,7 +2411,7 @@ class Subtensor:
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry():
             with self.substrate as substrate:
-                block_hash = None if block == None else substrate.get_block_hash(block)
+                block_hash = None if block is None else substrate.get_block_hash(block)
                 params = [method, data]
                 if block_hash:
                     params = params + [block_hash]
@@ -2574,93 +2623,109 @@ class Subtensor:
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network ValidatorBatchSize hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ValidatorBatchSize", block, [netuid]).value
+        return (
+            self.query_subtensor("ValidatorBatchSize", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def validator_prune_len(self, netuid: int, block: Optional[int] = None) -> int:
         """Returns network ValidatorPruneLen hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ValidatorPruneLen", block, [netuid]).value
+        return (
+            self.query_subtensor("ValidatorPruneLen", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def validator_logits_divergence(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[float]:
         """Returns network ValidatorLogitsDivergence hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
         return U16_NORMALIZED_FLOAT(
             self.query_subtensor("ValidatorLogitsDivergence", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
         )
 
     def validator_sequence_length(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network ValidatorSequenceLength hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ValidatorSequenceLength", block, [netuid]).value
+        return (
+            self.query_subtensor("ValidatorSequenceLength", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def validator_epochs_per_reset(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network ValidatorEpochsPerReset hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ValidatorEpochsPerReset", block, [netuid]).value
+        return (
+            self.query_subtensor("ValidatorEpochsPerReset", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def validator_epoch_length(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network ValidatorEpochLen hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ValidatorEpochLen", block, [netuid]).value
+        return (
+            self.query_subtensor("ValidatorEpochLen", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def validator_exclude_quantile(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[float]:
         """Returns network ValidatorEpochLen hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
         return U16_NORMALIZED_FLOAT(
             self.query_subtensor("ValidatorExcludeQuantile", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
         )
 
     def max_allowed_validators(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network MaxAllowedValidators hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("MaxAllowedValidators", block, [netuid]).value
+        return (
+            self.query_subtensor("MaxAllowedValidators", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def min_allowed_weights(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[int]:
         """Returns network MinAllowedWeights hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("MinAllowedWeights", block, [netuid]).value
+        return (
+            self.query_subtensor("MinAllowedWeights", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def max_weight_limit(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[float]:
         """Returns network MaxWeightsLimit hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
         return U16_NORMALIZED_FLOAT(
             self.query_subtensor("MaxWeightsLimit", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
         )
 
     def scaling_law_power(
         self, netuid: int, block: Optional[int] = None
     ) -> Optional[float]:
         """Returns network ScalingLawPower hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("ScalingLawPower", block, [netuid]).value / 100.0
+        return (
+            self.query_subtensor("ScalingLawPower", block, [netuid]).value / 100.0
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def synergy_scaling_law_power(
         self, netuid: int, block: Optional[int] = None
@@ -2675,19 +2740,37 @@ class Subtensor:
 
     def subnetwork_n(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
         """Returns network SubnetworkN hyper parameter"""
-        return self.query_subtensor("SubnetworkN", block, [netuid]).value if self.subnet_exists(netuid, block) else None
+        return (
+            self.query_subtensor("SubnetworkN", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def max_n(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
         """Returns network MaxAllowedUids hyper parameter"""
-        return self.query_subtensor("MaxAllowedUids", block, [netuid]).value if self.subnet_exists(netuid, block) else None
+        return (
+            self.query_subtensor("MaxAllowedUids", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
-    def blocks_since_epoch(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
+    def blocks_since_epoch(
+        self, netuid: int, block: Optional[int] = None
+    ) -> Optional[int]:
         """Returns network BlocksSinceLastStep hyper parameter"""
-        return self.query_subtensor("BlocksSinceLastStep", block, [netuid]).value if self.subnet_exists(netuid, block) else None
+        return (
+            self.query_subtensor("BlocksSinceLastStep", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     def tempo(self, netuid: int, block: Optional[int] = None) -> int:
         """Returns network Tempo hyper parameter"""
-        return self.query_subtensor("Tempo", block, [netuid]).value if self.subnet_exists(netuid, block) else None
+        return (
+            self.query_subtensor("Tempo", block, [netuid]).value
+            if self.subnet_exists(netuid, block)
+            else None
+        )
 
     ##########################
     #### Account functions ###
@@ -3212,7 +3295,7 @@ class Subtensor:
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry(encoded_hotkey: List[int]):
             with self.substrate as substrate:
-                block_hash = None if block == None else substrate.get_block_hash(block)
+                block_hash = substrate.get_block_hash(block) if block else None
                 params = [encoded_hotkey]
                 if block_hash:
                     params = params + [block_hash]
@@ -3248,7 +3331,7 @@ class Subtensor:
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry():
             with self.substrate as substrate:
-                block_hash = None if block == None else substrate.get_block_hash(block)
+                block_hash = substrate.get_block_hash(block) if block else None
                 params = []
                 if block_hash:
                     params = params + [block_hash]
@@ -3286,7 +3369,7 @@ class Subtensor:
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry(encoded_coldkey: List[int]):
             with self.substrate as substrate:
-                block_hash = None if block == None else substrate.get_block_hash(block)
+                block_hash = substrate.get_block_hash(block) if block else None
                 params = [encoded_coldkey]
                 if block_hash:
                     params = params + [block_hash]
@@ -3346,7 +3429,7 @@ class Subtensor:
 
     def get_stake_info_for_coldkeys(
         self, coldkey_ss58_list: List[str], block: Optional[int] = None
-    ) -> Dict[str, List[StakeInfo]]:
+    ) -> Optional[Dict[str, List[StakeInfo]]]:
         """
         Retrieves stake information for a list of coldkeys. This function aggregates stake data for multiple
         accounts, providing a collective view of their stakes and delegations.
@@ -3372,7 +3455,7 @@ class Subtensor:
             block=block,
         )
 
-        if hex_bytes_result == None:
+        if hex_bytes_result is None:
             return None
 
         if hex_bytes_result.startswith("0x"):
@@ -3448,7 +3531,7 @@ class Subtensor:
         in understanding whether a neuron is eligible to participate in network processes such as consensus,
         validation, and incentive distribution based on its registration status.
         """
-        if netuid == None:
+        if netuid is None:
             return self.is_hotkey_registered_any(hotkey_ss58, block)
         else:
             return self.is_hotkey_registered_on_subnet(hotkey_ss58, netuid, block)
@@ -3623,13 +3706,13 @@ class Subtensor:
         This function is crucial for analyzing individual neurons' contributions and status within a specific
         subnet, offering insights into their roles in the network's consensus and validation mechanisms.
         """
-        if uid == None:
+        if uid is None:
             return NeuronInfo._null_neuron()
 
         @retry(delay=2, tries=3, backoff=2, max_delay=4)
         def make_substrate_call_with_retry():
             with self.substrate as substrate:
-                block_hash = None if block == None else substrate.get_block_hash(block)
+                block_hash = substrate.get_block_hash(block) if block else None
                 params = [netuid, uid]
                 if block_hash:
                     params = params + [block_hash]
@@ -3695,7 +3778,7 @@ class Subtensor:
         This function is useful for quick and efficient analyses of neuron status and activities within a
         subnet without the need for comprehensive data retrieval.
         """
-        if uid == None:
+        if uid is None:
             return NeuronInfoLite._null_neuron()
 
         hex_bytes_result = self.query_runtime_api(
