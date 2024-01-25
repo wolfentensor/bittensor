@@ -2754,7 +2754,7 @@ class subtensor:
 
     def get_prometheus_info(
         self, netuid: int, hotkey_ss58: str, block: Optional[int] = None
-    ) -> Optional[AxonInfo]:
+    ) -> Optional[PrometheusInfo]:
         """Returns the prometheus information for this hotkey account"""
         result = self.query_subtensor("Prometheus", block, [netuid, hotkey_ss58])
         if result != None:
