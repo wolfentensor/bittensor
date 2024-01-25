@@ -1168,7 +1168,6 @@ class Subtensor:
         placeholder2: int = 0,
         wait_for_inclusion: bool = False,
         wait_for_finalization=True,
-        prompt: bool = False,
     ) -> bool:
         """
         Registers a neuron's serving endpoint on the Bittensor network. This function announces the
@@ -1181,6 +1180,8 @@ class Subtensor:
             port (int): The port number on which the neuron is serving.
             protocol (int): The protocol type used by the neuron (e.g., GRPC, HTTP).
             netuid (int): The unique identifier of the subnetwork.
+            placeholder1 (int):
+            placeholder2 (int):
             Other arguments: Placeholder parameters for future extensions.
             wait_for_inclusion (bool, optional): Waits for the transaction to be included in a block.
             wait_for_finalization (bool, optional): Waits for the transaction to be finalized on the blockchain.
