@@ -27,6 +27,7 @@ from retry import retry
 from loguru import logger
 from typing import List, Dict, Union, Optional, Tuple, TypedDict, Any
 from substrateinterface.base import QueryMapResult, SubstrateInterface
+from scalecodec.base import ScaleDecoder, ScaleBytes, RuntimeConfigurationObject, ScaleType
 from scalecodec.base import RuntimeConfiguration
 from scalecodec.type_registry import load_type_registry_preset
 
@@ -1732,8 +1733,9 @@ class subtensor:
 
         Args:
             wallet (bittensor.wallet): The wallet associated with the neuron from which the stake is being removed.
-            hotkey_ss58 (Optional[str]): The SS58 address of the hotkey account to unstake from.
-            amount (Union[Balance, float], optional): The amount of TAO to unstake. If not specified, unstakes all.
+            proposal_idx (int):
+            proposal_hash (str):
+            vote (bool):
             wait_for_inclusion (bool, optional): Waits for the transaction to be included in a block.
             wait_for_finalization (bool, optional): Waits for the transaction to be finalized on the blockchain.
             prompt (bool, optional): If True, prompts for user confirmation before proceeding.
@@ -2137,7 +2139,7 @@ class subtensor:
         name: str,
         block: Optional[int] = None,
         params: Optional[List[object]] = [],
-    ) -> Optional[object]:
+    ) -> Optional[ScaleType]:
         """
         Queries named storage from the subtensor module on the Bittensor blockchain. This function is used to retrieve
         specific data or parameters from the blockchain, such as stake, rank, or other neuron-specific attributes.
@@ -2248,7 +2250,7 @@ class subtensor:
         name: str,
         block: Optional[int] = None,
         params: Optional[List[object]] = [],
-    ) -> Optional[object]:
+    ) -> Optional[ScaleType]:
         """
         Queries any module storage on the Bittensor blockchain with the specified parameters and block number.
         This function is a generic query interface that allows for flexible and diverse data retrieval from
@@ -2289,7 +2291,7 @@ class subtensor:
         name: str,
         block: Optional[int] = None,
         params: Optional[List[object]] = [],
-    ) -> Optional[object]:
+    ) -> Optional[ScaleType]:
         """
         Queries map storage from any module on the Bittensor blockchain. This function retrieves data structures
         that represent key-value mappings, essential for accessing complex and structured data within the blockchain modules.
@@ -2314,9 +2316,7 @@ class subtensor:
                     module=module,
                     storage_function=name,
                     params=params,
-                    block_hash=None
-                    if block == None
-                    else substrate.get_block_hash(block),
+                    block_hash=None if block is None else substrate.get_block_hash(block),
                 )
 
         return make_substrate_call_with_retry()
