@@ -1168,6 +1168,7 @@ class Subtensor:
         placeholder2: int = 0,
         wait_for_inclusion: bool = False,
         wait_for_finalization=True,
+        *args, **kwargs
     ) -> bool:
         """
         Registers a neuron's serving endpoint on the Bittensor network. This function announces the
@@ -1212,7 +1213,7 @@ class Subtensor:
         axon: "bittensor.Axon",
         wait_for_inclusion: bool = False,
         wait_for_finalization: bool = True,
-        prompt: bool = False,
+        *args, **kwargs
     ) -> bool:
         """
         Registers an Axon serving endpoint on the Bittensor network for a specific neuron. This function
@@ -1703,8 +1704,6 @@ class Subtensor:
 
         Args:
             wallet (bittensor.wallet): The wallet associated with the neuron from which the stake is being removed.
-            hotkey_ss58 (Optional[str]): The SS58 address of the hotkey account to unstake from.
-            amount (Union[Balance, float], optional): The amount of TAO to unstake. If not specified, unstakes all.
             wait_for_inclusion (bool, optional): Waits for the transaction to be included in a block.
             wait_for_finalization (bool, optional): Waits for the transaction to be finalized on the blockchain.
             prompt (bool, optional): If True, prompts for user confirmation before proceeding.
@@ -1843,7 +1842,7 @@ class Subtensor:
             module="Triumvirate", name="ProposalOf", block=block, params=[proposal_hash]
         )
 
-        return proposal_data.serialize() if proposal_data != None else None
+        return proposal_data.serialize() if proposal_data else None
 
     def get_proposal_hashes(self, block: Optional[int] = None) -> Optional[List[str]]:
         """
