@@ -27,8 +27,7 @@ from retry import retry
 from loguru import logger
 from typing import List, Dict, Union, Optional, Tuple, TypedDict, Any
 from substrateinterface.base import QueryMapResult, SubstrateInterface
-from scalecodec.base import ScaleDecoder, ScaleBytes, RuntimeConfigurationObject, ScaleType
-from scalecodec.base import RuntimeConfiguration
+from scalecodec.base import RuntimeConfiguration, ScaleType
 from scalecodec.type_registry import load_type_registry_preset
 
 # Local imports.
@@ -321,41 +320,34 @@ class Subtensor:
             bittensor.logging.warning("We strongly encourage running a local subtensor node whenever possible.")
             bittensor.logging.warning("In a future release, local subtensor will become the default endpoint.")
 
-        self.config.subtensor._mock = (
-            _mock if _mock is not None
-            else self.config.subtensor.get("_mock", bittensor.defaults.subtensor._mock)
-        )
-        if self.config.subtensor._mock:
-            config.subtensor._mock = True
-        else:
-            # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
-            try:
-                # Set up params.
-                self.substrate = SubstrateInterface(
-                    ss58_format=bittensor.__ss58_format__,
-                    use_remote_preset=True,
-                    url=self.chain_endpoint,
-                    type_registry=bittensor.__type_registry__,
-                )
-            except ConnectionRefusedError as e:
-                bittensor.logging.error(
-                    f"Could not connect to {self.network} network with {self.chain_endpoint} chain endpoint. Exiting..."
-                )
-                bittensor.logging.info(
-                    f"You can check if you have connectivity by runing this command: nc -vz localhost {self.chain_endpoint.split(':')[2]}"
-                )
-                exit(1)
-                # TODO (edu/phil): Advise to run local subtensor and point to dev docs.
+        # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
+        try:
+            # Set up params.
+            self.substrate = SubstrateInterface(
+                ss58_format=bittensor.__ss58_format__,
+                use_remote_preset=True,
+                url=self.chain_endpoint,
+                type_registry=bittensor.__type_registry__,
+            )
+        except ConnectionRefusedError as e:
+            bittensor.logging.error(
+                f"Could not connect to {self.network} network with {self.chain_endpoint} chain endpoint. Exiting..."
+            )
+            bittensor.logging.info(
+                f"You can check if you have connectivity by runing this command: nc -vz localhost {self.chain_endpoint.split(':')[2]}"
+            )
+            exit(1)
+            # TODO (edu/phil): Advise to run local subtensor and point to dev docs.
 
-            try:
-                self.substrate.websocket.settimeout(600)
-            except Exception as exc:
-                bittensor.logging.warning("Could not set websocket timeout.")
+        try:
+            self.substrate.websocket.settimeout(600)
+        except Exception as exc:
+            bittensor.logging.warning(f"Could not set websocket timeout.")
 
-            if log_verbose:
-                bittensor.logging.info(
-                    f"Connected to {self.network} network and {self.chain_endpoint}."
-                )
+        if log_verbose:
+            bittensor.logging.info(
+                f"Connected to {self.network} network and {self.chain_endpoint}."
+            )
 
     def __new__(
             cls,
@@ -644,6 +636,15 @@ class Subtensor:
             wait_for_inclusion (bool, optional): Waits for the transaction to be included in a block.
             wait_for_finalization (bool, optional): Waits for the transaction to be finalized on the blockchain.
             Other arguments: Various optional parameters to customize the registration process.
+            prompt (bool): Indicates whether to prompt the user for input.
+            max_allowed_attempts (int): The maximum number of allowed attempts.
+            output_in_place (bool): Whether to output in place.
+            cuda (bool): Whether to use CUDA for processing.
+            dev_id (Union[List[int], int]): Device ID or a list of device IDs for processing.
+            tpb (int): Threads per block for CUDA processing.
+            num_processes (Optional[int]): Number of processes to use.
+            update_interval (Optional[int]): Interval for updates.
+            log_verbose (bool): Enables verbose logging.
 
         Returns:
             bool: True if the registration is successful, False otherwise.
@@ -709,6 +710,17 @@ class Subtensor:
         Args:
             wallet (bittensor.wallet): The wallet for which the faucet transaction is to be run.
             Other arguments: Various optional parameters to customize the faucet transaction process.
+            wait_for_inclusion (bool): Indicates whether to wait for transaction inclusion in a block.
+            wait_for_finalization (bool): Indicates whether to wait for transaction finalization.
+            prompt (bool): Indicates whether to prompt the user for input.
+            max_allowed_attempts (int): The maximum number of allowed attempts.
+            output_in_place (bool): Whether to output in place.
+            cuda (bool): Whether to use CUDA for processing.
+            dev_id (Union[List[int], int]): Device ID or a list of device IDs for processing.
+            tpb (int): Threads per block for CUDA processing.
+            num_processes (Optional[int]): Number of processes to use.
+            update_interval (Optional[int]): Interval for updates.
+            log_verbose (bool): Enables verbose logging.
 
         Returns:
             bool: True if the faucet transaction is successful, False otherwise.
@@ -974,6 +986,8 @@ class Subtensor:
         wallet has sufficient funds to cover both the transfer amount and the associated costs. This function
         provides a crucial tool for managing financial operations within the Bittensor network.
         """
+        transfer_balance: Union[Balance, float, int] = value
+
         if isinstance(value, float):
             transfer_balance = Balance.from_tao(value)
         elif isinstance(value, int):

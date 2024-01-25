@@ -19,6 +19,7 @@ import json
 import bittensor
 from dataclasses import asdict
 import bittensor.utils.networking as net
+from scalecodec.base import ScaleType
 from rich.prompt import Confirm
 from ..errors import MetadataError
 
@@ -277,7 +278,7 @@ from retry import retry
 from typing import Optional
 
 
-def get_metadata(self, netuid: int, hotkey: str, block: Optional[int] = None) -> str:
+def get_metadata(self, netuid: int, hotkey: str, block: Optional[int] = None) -> Optional[ScaleType]:
     @retry(delay=2, tries=3, backoff=2, max_delay=4)
     def make_substrate_call_with_retry():
         with self.substrate as substrate:
