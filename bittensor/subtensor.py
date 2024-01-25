@@ -2673,29 +2673,21 @@ class Subtensor:
             / 100.0
         )
 
-    def subnetwork_n(self, netuid: int, block: Optional[int] = None) -> int:
+    def subnetwork_n(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
         """Returns network SubnetworkN hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("SubnetworkN", block, [netuid]).value
+        return self.query_subtensor("SubnetworkN", block, [netuid]).value if self.subnet_exists(netuid, block) else None
 
     def max_n(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
         """Returns network MaxAllowedUids hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("MaxAllowedUids", block, [netuid]).value
+        return self.query_subtensor("MaxAllowedUids", block, [netuid]).value if self.subnet_exists(netuid, block) else None
 
-    def blocks_since_epoch(self, netuid: int, block: Optional[int] = None) -> int:
+    def blocks_since_epoch(self, netuid: int, block: Optional[int] = None) -> Optional[int]:
         """Returns network BlocksSinceLastStep hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("BlocksSinceLastStep", block, [netuid]).value
+        return self.query_subtensor("BlocksSinceLastStep", block, [netuid]).value if self.subnet_exists(netuid, block) else None
 
     def tempo(self, netuid: int, block: Optional[int] = None) -> int:
         """Returns network Tempo hyper parameter"""
-        if not self.subnet_exists(netuid, block):
-            return None
-        return self.query_subtensor("Tempo", block, [netuid]).value
+        return self.query_subtensor("Tempo", block, [netuid]).value if self.subnet_exists(netuid, block) else None
 
     ##########################
     #### Account functions ###
@@ -2755,7 +2747,7 @@ class Subtensor:
     ) -> Optional[AxonInfo]:
         """Returns the axon information for this hotkey account"""
         result = self.query_subtensor("Axons", block, [netuid, hotkey_ss58])
-        if result != None:
+        if result:
             return AxonInfo(
                 ip=bittensor.utils.networking.int_to_ip(result.value["ip"]),
                 ip_type=result.value["ip_type"],
@@ -2765,8 +2757,7 @@ class Subtensor:
                 placeholder1=result.value["placeholder1"],
                 placeholder2=result.value["placeholder2"],
             )
-        else:
-            return None
+        return None
 
     def get_prometheus_info(
         self, netuid: int, hotkey_ss58: str, block: Optional[int] = None
