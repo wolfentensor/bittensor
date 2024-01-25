@@ -1862,7 +1862,7 @@ class Subtensor:
             module="Triumvirate", name="Proposals", block=block
         )
 
-        return proposal_hashes.serialize() if proposal_hashes != None else None
+        return proposal_hashes.serialize() if proposal_hashes else None
 
     def get_proposals(
         self, block: Optional[int] = None
