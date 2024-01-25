@@ -91,9 +91,9 @@ class ParamWithTypes(TypedDict):
     type: str  # ScaleType string of the parameter.
 
 
-class Subtensor:
+class subtensor:
     """
-    The Subtensor class in Bittensor serves as a crucial interface for interacting with the Bittensor blockchain,
+    The subtensor class in Bittensor serves as a crucial interface for interacting with the Bittensor blockchain,
     facilitating a range of operations essential for the decentralized machine learning network. This class
     enables neurons (network participants) to engage in activities such as registering on the network, managing
     staked weights, setting inter-neuronal weights, and participating in consensus mechanisms.
@@ -103,7 +103,7 @@ class Subtensor:
     the ranking and incentive mechanisms within the network. Higher-ranked neurons, as determined by their
     contributions and trust within the network, receive more incentives.
 
-    The Subtensor class connects to various Bittensor networks like the main 'finney' network or local test
+    The subtensor class connects to various Bittensor networks like the main 'finney' network or local test
     networks, providing a gateway to the blockchain layer of Bittensor. It leverages a staked weighted trust
     system and consensus to ensure fair and distributed incentive mechanisms, where incentives (I) are
     primarily allocated to neurons that are trusted by the majority of the network&#8203;``【oaicite:1】``&#8203;.
@@ -121,7 +121,7 @@ class Subtensor:
 
     Example Usage:
         # Connect to the main Bittensor network (Finney).
-        finney_subtensor = Subtensor(network='finney')
+        finney_subtensor = subtensor(network='finney')
 
         # Close websocket connection with the Bittensor network.
         finney_subtensor.close()
@@ -139,10 +139,10 @@ class Subtensor:
         # Speculate by accumulating bonds in other promising neurons.
         success = finney_subtensor.delegate(wallet=wallet, delegate_ss58=other_neuron_ss58, amount=bond_amount)
 
-        # Get the metagraph for a specific subnet using given Subtensor connection
-        metagraph = Subtensor.metagraph(netuid=netuid)
+        # Get the metagraph for a specific subnet using given subtensor connection
+        metagraph = subtensor.metagraph(netuid=netuid)
 
-    By facilitating these operations, the Subtensor class is instrumental in maintaining the decentralized
+    By facilitating these operations, the subtensor class is instrumental in maintaining the decentralized
     intelligence and dynamic learning environment of the Bittensor network, as envisioned in its foundational
     principles and mechanisms described in the NeurIPS paper.
     """
@@ -150,7 +150,7 @@ class Subtensor:
     @staticmethod
     def config() -> "bittensor.config":
         parser = argparse.ArgumentParser()
-        Subtensor.add_args(parser)
+        subtensor.add_args(parser)
         logger.debug(bittensor.config(parser, args=[]))
         return bittensor.config(parser, args=[])
 
@@ -172,27 +172,27 @@ class Subtensor:
                 or bittensor.__finney_entrypoint__
             )
             parser.add_argument(
-                "--" + prefix_str + "Subtensor.network",
+                "--" + prefix_str + "subtensor.network",
                 default=default_network,
                 type=str,
-                help="""The Subtensor network flag. The likely choices are:
+                help="""The subtensor network flag. The likely choices are:
                                         -- finney (main network)
                                         -- test (test network)
                                         -- archive (archive network +300 blocks)
                                         -- local (local running network)
-                                    If this option is set it overloads Subtensor.chain_endpoint with
+                                    If this option is set it overloads subtensor.chain_endpoint with
                                     an entry point node from that network.
                                     """,
             )
             parser.add_argument(
-                "--" + prefix_str + "Subtensor.chain_endpoint",
+                "--" + prefix_str + "subtensor.chain_endpoint",
                 default=default_chain_endpoint,
                 type=str,
-                help="""The Subtensor endpoint flag. If set, overrides the --network flag.
+                help="""The subtensor endpoint flag. If set, overrides the --network flag.
                                     """,
             )
             parser.add_argument(
-                "--" + prefix_str + "Subtensor._mock",
+                "--" + prefix_str + "subtensor._mock",
                 default=False,
                 type=bool,
                 help="""If true, uses a mocked connection to the chain.
@@ -263,15 +263,15 @@ class Subtensor:
         evaluated_network: Optional[str] = None
         network_preference_order: list = [
             lambda: network,
-            lambda: config.Subtensor.chain_endpoint if config.get("__is_set", {}).get("Subtensor.chain_endpoint") else None,
-            lambda: config.Subtensor.network if config.get("__is_set", {}).get("Subtensor.network") else None,
-            lambda: config.Subtensor.chain_endpoint if config.Subtensor.get("chain_endpoint") else None,
-            lambda: config.Subtensor.network if config.Subtensor.get("network") else None,
-            lambda: bittensor.defaults.Subtensor.network
+            lambda: config.subtensor.chain_endpoint if config.get("__is_set", {}).get("subtensor.chain_endpoint") else None,
+            lambda: config.subtensor.network if config.get("__is_set", {}).get("subtensor.network") else None,
+            lambda: config.subtensor.chain_endpoint if config.subtensor.get("chain_endpoint") else None,
+            lambda: config.subtensor.network if config.subtensor.get("network") else None,
+            lambda: bittensor.defaults.subtensor.network
         ]
 
         for get_network in network_preference_order:
-            evaluated_network, evaluated_endpoint = Subtensor.determine_chain_endpoint_and_network(get_network())
+            evaluated_network, evaluated_endpoint = subtensor.determine_chain_endpoint_and_network(get_network())
             if evaluated_network and evaluated_endpoint:
                 break
 
@@ -285,19 +285,19 @@ class Subtensor:
         log_verbose: bool = True,
     ) -> None:
         """
-        Initializes a Subtensor interface for interacting with the Bittensor blockchain.
+        Initializes a subtensor interface for interacting with the Bittensor blockchain.
 
-        NOTE: Currently Subtensor defaults to the finney network. This will change in a future release.
+        NOTE: Currently subtensor defaults to the finney network. This will change in a future release.
 
-        We strongly encourage users to run their own local Subtensor node whenever possible. This increases
-        decentralization and resilience of the network. In a future release, local Subtensor will become the
+        We strongly encourage users to run their own local subtensor node whenever possible. This increases
+        decentralization and resilience of the network. In a future release, local subtensor will become the
         default and the fallback to finney removed. Please plan ahead for this change. We will provide detailed
-        instructions on how to run a local Subtensor node in the documentation in a subsequent release.
+        instructions on how to run a local subtensor node in the documentation in a subsequent release.
 
         Args:
             network (str, optional): The network name to connect to (e.g., 'finney', 'local').
                                      Defaults to the main Bittensor network if not specified.
-            config (bittensor.config, optional): Configuration object for the Subtensor.
+            config (bittensor.config, optional): Configuration object for the subtensor.
                                                  If not provided, a default configuration is used.
             _mock (bool, optional): If set to True, uses a mocked connection for testing purposes.
 
@@ -305,15 +305,15 @@ class Subtensor:
         blockchain operations such as neuron registration, stake management, and setting weights.
 
         """
-        # Determine config.Subtensor.chain_endpoint and config.Subtensor.network config.
+        # Determine config.subtensor.chain_endpoint and config.subtensor.network config.
         # If chain_endpoint is set, we override the network flag, otherwise, the chain_endpoint is assigned by the network.
-        # Argument importance: network > chain_endpoint > config.Subtensor.chain_endpoint > config.Subtensor.network
+        # Argument importance: network > chain_endpoint > config.subtensor.chain_endpoint > config.subtensor.network
         if config is None:
-            config = Subtensor.config()
+            config = subtensor.config()
         self.config = copy.deepcopy(config)
 
-        # Setup config.Subtensor.network and config.Subtensor.chain_endpoint
-        self.chain_endpoint, self.network = Subtensor.setup_config(network, config)
+        # Setup config.subtensor.network and config.subtensor.chain_endpoint
+        self.chain_endpoint, self.network = subtensor.setup_config(network, config)
 
         if (
             self.network == "finney"
@@ -323,22 +323,22 @@ class Subtensor:
                 f"You are connecting to {self.network} network with endpoint {self.chain_endpoint}."
             )
             bittensor.logging.warning(
-                "We strongly encourage running a local Subtensor node whenever possible. "
+                "We strongly encourage running a local subtensor node whenever possible. "
                 "This increases decentralization and resilience of the network."
             )
             bittensor.logging.warning(
-                "In a future release, local Subtensor will become the default endpoint. "
-                "To get ahead of this change, please run a local Subtensor node and point to it."
+                "In a future release, local subtensor will become the default endpoint. "
+                "To get ahead of this change, please run a local subtensor node and point to it."
             )
 
         # Returns a mocked connection with a background chain connection.
-        self.config.Subtensor._mock = (
+        self.config.subtensor._mock = (
             _mock
             if _mock != None
-            else self.config.Subtensor.get("_mock", bittensor.defaults.Subtensor._mock)
+            else self.config.subtensor.get("_mock", bittensor.defaults.subtensor._mock)
         )
-        if self.config.Subtensor._mock:
-            config.Subtensor._mock = True
+        if self.config.subtensor._mock:
+            config.subtensor._mock = True
             return bittensor.subtensor_mock.MockSubtensor()
 
         # Attempt to connect to chosen endpoint. Fallback to finney if local unavailable.
@@ -358,7 +358,7 @@ class Subtensor:
                 f"You can check if you have connectivity by runing this command: nc -vz localhost {self.chain_endpoint.split(':')[2]}"
             )
             exit(1)
-            # TODO (edu/phil): Advise to run local Subtensor and point to dev docs.
+            # TODO (edu/phil): Advise to run local subtensor and point to dev docs.
 
         try:
             self.substrate.websocket.settimeout(600)
@@ -373,10 +373,10 @@ class Subtensor:
     def __str__(self) -> str:
         if self.network == self.chain_endpoint:
             # Connecting to chain endpoint without network known.
-            return "Subtensor({})".format(self.chain_endpoint)
+            return "subtensor({})".format(self.chain_endpoint)
         else:
             # Connecting to network with endpoint known.
-            return "Subtensor({}, {})".format(self.network, self.chain_endpoint)
+            return "subtensor({}, {})".format(self.network, self.chain_endpoint)
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -388,11 +388,11 @@ class Subtensor:
         """
         (Re)creates the websocket connection, if the URL contains a 'ws' or 'wss' scheme
         """
-        self.Subtensor.connect_websocket
+        self.subtensor.connect_websocket
 
     def close(self):
         """
-        Cleans up resources for this Subtensor instance like active websocket connection and active extensions
+        Cleans up resources for this subtensor instance like active websocket connection and active extensions
         """
         self.substrate.close()
 
@@ -715,7 +715,7 @@ class Subtensor:
         the necessary resources to begin their journey in the decentralized AI network.
 
         Note: This is for testnet ONLY and is disabled currently. You must build your own
-        staging Subtensor chain with the `--features pow-faucet` argument to enable this.
+        staging subtensor chain with the `--features pow-faucet` argument to enable this.
         """
         return run_faucet_extrinsic(
             subtensor=self,
@@ -2009,7 +2009,7 @@ class Subtensor:
     #### Registry Calls ####
     ########################
 
-    """ Queries Subtensor registry named storage with params and block. """
+    """ Queries subtensor registry named storage with params and block. """
 
     def query_identity(
         self,
@@ -2130,7 +2130,7 @@ class Subtensor:
     #### Standard Calls ####
     ########################
 
-    """ Queries Subtensor named storage with params and block. """
+    """ Queries subtensor named storage with params and block. """
 
     def query_subtensor(
         self,
@@ -2139,7 +2139,7 @@ class Subtensor:
         params: Optional[List[object]] = [],
     ) -> Optional[object]:
         """
-        Queries named storage from the Subtensor module on the Bittensor blockchain. This function is used to retrieve
+        Queries named storage from the subtensor module on the Bittensor blockchain. This function is used to retrieve
         specific data or parameters from the blockchain, such as stake, rank, or other neuron-specific attributes.
 
         Args:
@@ -2168,7 +2168,7 @@ class Subtensor:
 
         return make_substrate_call_with_retry()
 
-    """ Queries Subtensor map storage with params and block. """
+    """ Queries subtensor map storage with params and block. """
 
     def query_map_subtensor(
         self,
@@ -2177,7 +2177,7 @@ class Subtensor:
         params: Optional[List[object]] = [],
     ) -> QueryMapResult:
         """
-        Queries map storage from the Subtensor module on the Bittensor blockchain. This function is designed to
+        Queries map storage from the subtensor module on the Bittensor blockchain. This function is designed to
         retrieve a map-like data structure, which can include various neuron-specific details or network-wide attributes.
 
         Args:
