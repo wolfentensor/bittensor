@@ -931,8 +931,8 @@ def get_wallet_transfers(wallet_address) -> List[dict]:
     }
 
     response = requests.post(
-        API_URL, json={"query": GRAPHQL_QUERY, "variables": variables}
-    )
+        API_URL, json={"query": GRAPHQL_QUERY, "variables": variables}, 
+    timeout=60)
     data = response.json()
 
     # Extract nodes and pageInfo from the response
