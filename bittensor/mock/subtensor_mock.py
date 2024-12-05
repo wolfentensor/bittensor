@@ -15,7 +15,6 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from random import randint
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 from unittest.mock import MagicMock
@@ -41,6 +40,7 @@ from ..utils.balance import Balance
 from ..utils.registration import POWSolution
 
 from typing import TypedDict
+import secrets
 
 
 # Mock Testing Constant
@@ -390,7 +390,7 @@ class MockSubtensor(subtensor):
                 subtensor_state["MaxAllowedUids"][netuid]
             ):
                 # Subnet full, replace neuron randomly
-                uid = randint(0, subnetwork_n - 1)
+                uid = secrets.SystemRandom().randint(0, subnetwork_n - 1)
             else:
                 # Subnet not full, add new neuron
                 # Append as next uid and increment subnetwork_n
