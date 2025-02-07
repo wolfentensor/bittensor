@@ -100,7 +100,7 @@ def get_external_ip() -> str:
     """
     # --- Try AWS
     try:
-        external_ip = requests.get("https://checkip.amazonaws.com").text.strip()
+        external_ip = requests.get("https://checkip.amazonaws.com", timeout=60).text.strip()
         assert isinstance(ip_to_int(external_ip), int)
         return str(external_ip)
     except Exception:
@@ -146,7 +146,7 @@ def get_external_ip() -> str:
 
     # --- Try Wikipedia
     try:
-        external_ip = requests.get("https://www.wikipedia.org").headers["X-Client-IP"]
+        external_ip = requests.get("https://www.wikipedia.org", timeout=60).headers["X-Client-IP"]
         assert isinstance(ip_to_int(external_ip), int)
         return str(external_ip)
     except Exception:
