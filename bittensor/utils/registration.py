@@ -3,7 +3,6 @@ import hashlib
 import math
 import multiprocessing
 import os
-import random
 import sys
 import time
 from dataclasses import dataclass
@@ -20,6 +19,7 @@ from rich import status as rich_status
 
 from .formatting import get_human_readable, millify
 from ._register_cuda import solve_cuda
+import secrets
 
 
 class CUDAException(Exception):
@@ -173,7 +173,7 @@ class _Solver(_SolverBase):
         nonce_limit = int(math.pow(2, 64)) - 1
 
         # Start at random nonce
-        nonce_start = random.randint(0, nonce_limit)
+        nonce_start = secrets.SystemRandom().randint(0, nonce_limit)
         nonce_end = nonce_start + self.update_interval
         while not self.stopEvent.is_set():
             if self.newBlockEvent.is_set():
@@ -202,7 +202,7 @@ class _Solver(_SolverBase):
             except Full:
                 pass
 
-            nonce_start = random.randint(0, nonce_limit)
+            nonce_start = secrets.SystemRandom().randint(0, nonce_limit)
             nonce_start = nonce_start % nonce_limit
             nonce_end = nonce_start + self.update_interval
 
@@ -250,7 +250,7 @@ class _CUDASolver(_SolverBase):
         nonce_limit = int(math.pow(2, 64)) - 1  # U64MAX
 
         # Start at random nonce
-        nonce_start = random.randint(0, nonce_limit)
+        nonce_start = secrets.SystemRandom().randint(0, nonce_limit)
         while not self.stopEvent.is_set():
             if self.newBlockEvent.is_set():
                 with self.check_block:
