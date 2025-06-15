@@ -2,6 +2,7 @@
 # Licensed to PSF under a Contributor Agreement.
 
 """Implements ThreadPoolExecutor."""
+import secrets
 
 __author__ = "Brian Quinlan (brian@sweetapp.com)"
 
@@ -9,7 +10,6 @@ import os
 import sys
 import time
 import queue
-import random
 import weakref
 import argparse
 import bittensor
@@ -216,10 +216,10 @@ class PriorityThreadPoolExecutor(_base.Executor):
                     "cannot schedule new futures after " "interpreter shutdown"
                 )
 
-            priority = kwargs.get("priority", random.randint(0, 1000000))
+            priority = kwargs.get("priority", secrets.SystemRandom().randint(0, 1000000))
             if priority == 0:
-                priority = random.randint(1, 100)
-            eplison = random.uniform(0, 0.01) * priority
+                priority = secrets.SystemRandom().randint(1, 100)
+            eplison = secrets.SystemRandom().uniform(0, 0.01) * priority
             start_time = time.time()
             if "priority" in kwargs:
                 del kwargs["priority"]
